@@ -1,0 +1,711 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CSS Variables ===== */
+:root {
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --header-height: 4rem;
+  --sidebar-width: 320px;
+  --mobile-nav-height: 64px;
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Base Styles ===== */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  /* Mobile: use dynamic viewport so address bar doesn't break layout */
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #0f1419;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+/* ===== Touch-Friendly Scrolling ===== */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3f52;
+  border-radius: 10px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a5570;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3f52 transparent;
+}
+
+/* ===== Selection ===== */
+::selection {
+  background: rgba(47, 155, 240, 0.3);
+  color: #ffffff;
+}
+
+/* ===== Focus States ===== */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #2f9bf0;
+  outline-offset: 2px;
+}
+
+/* ===== Button Base Styles ===== */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200;
+    @apply px-4 py-2.5 text-sm;
+    @apply focus-visible:ring-2 focus-visible:ring-telegram-accent focus-visible:ring-offset-2 focus-visible:ring-offset-telegram-bg;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply active:scale-[0.98];
+    min-height: 44px; /* Touch-friendly */
+  }
+
+  @screen md {
+    .btn {
+      @apply px-5 py-2.5 text-base;
+    }
+  }
+
+  .btn-primary {
+    @apply btn bg-telegram-accent hover:bg-telegram-accent-hover text-white;
+    @apply shadow-lg shadow-telegram-accent/20 hover:shadow-xl hover:shadow-telegram-accent/30;
+  }
+
+  .btn-secondary {
+    @apply btn bg-telegram-sidebar hover:bg-telegram-sidebar-hover text-telegram-text;
+    @apply border border-telegram-border hover:border-telegram-border-light;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent hover:bg-telegram-accent-muted text-telegram-text-secondary hover:text-telegram-accent;
+  }
+
+  .btn-danger {
+    @apply btn bg-telegram-error/10 hover:bg-telegram-error/20 text-telegram-error;
+    @apply border border-telegram-error/30 hover:border-telegram-error/50;
+  }
+
+  .btn-icon {
+    @apply inline-flex items-center justify-center rounded-xl transition-all duration-200;
+    @apply w-10 h-10 md:w-11 md:h-11;
+    @apply hover:bg-telegram-accent-muted text-telegram-text-secondary hover:text-telegram-accent;
+    @apply active:scale-95;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Input Styles */
+  .input {
+    @apply w-full bg-telegram-sidebar border border-telegram-border rounded-xl;
+    @apply px-4 py-3 text-base;
+    @apply text-telegram-text placeholder-telegram-text-muted;
+    @apply transition-all duration-200;
+    @apply focus:border-telegram-accent focus:ring-2 focus:ring-telegram-accent/20;
+    @apply hover:border-telegram-border-light;
+    min-height: 48px; /* Touch-friendly */
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .input-with-icon {
+    @apply input pl-12;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-telegram-bg-secondary border border-telegram-border;
+    @apply rounded-xl md:rounded-2xl;
+    @apply shadow-card transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:border-telegram-border-light hover:shadow-card-hover;
+  }
+
+  @media (min-width: 768px) {
+    .card-hover {
+      @apply hover:-translate-y-1;
+    }
+  }
+
+  .card-interactive {
+    @apply card-hover cursor-pointer active:scale-[0.99];
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  @screen md {
+    .badge {
+      @apply gap-1.5 px-2.5 py-1;
+    }
+  }
+
+  .badge-primary {
+    @apply badge bg-telegram-accent-muted text-telegram-accent;
+  }
+
+  .badge-success {
+    @apply badge bg-telegram-success/15 text-telegram-success;
+  }
+
+  .badge-warning {
+    @apply badge bg-telegram-warning/15 text-telegram-warning;
+  }
+
+  .badge-error {
+    @apply badge bg-telegram-error/15 text-telegram-error;
+  }
+
+  /* Skeleton Loading */
+  .skeleton {
+    @apply bg-telegram-border rounded animate-pulse;
+  }
+
+  .skeleton-shimmer {
+    @apply bg-gradient-to-r from-telegram-border via-telegram-border-light to-telegram-border;
+    background-size: 200% 100%;
+    @apply animate-shimmer rounded;
+  }
+}
+
+/* ===== Chat Item Styles ===== */
+.chat-item {
+  @apply relative cursor-pointer transition-all duration-200;
+  @apply rounded-xl mx-1 px-2 py-2.5;
+}
+
+@media (min-width: 768px) {
+  .chat-item {
+    @apply mx-2 px-3 py-3;
+  }
+}
+
+.chat-item:hover {
+  background-color: rgba(47, 155, 240, 0.08);
+}
+
+.chat-item:active {
+  background-color: rgba(47, 155, 240, 0.12);
+}
+
+.chat-item.active {
+  background: linear-gradient(135deg, rgba(47, 155, 240, 0.15) 0%, rgba(47, 155, 240, 0.08) 100%);
+  border-left: 3px solid #2f9bf0;
+}
+
+.chat-item.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(47, 155, 240, 0.3), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ===== Message Styles ===== */
+.message-bubble {
+  max-width: 90%;
+  word-wrap: break-word;
+  @apply relative;
+}
+
+@media (min-width: 640px) {
+  .message-bubble {
+    max-width: 80%;
+  }
+}
+
+@media (min-width: 768px) {
+  .message-bubble {
+    max-width: 70%;
+  }
+}
+
+.message-bubble-in {
+  @apply bg-telegram-message rounded-2xl rounded-bl-md;
+  @apply shadow-sm;
+}
+
+/* Optional tail on leading (left) edge for incoming bubbles */
+.message-bubble-in.message-bubble-tail::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  bottom: 8px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid #1c2938; /* telegram-message */
+}
+
+.message-bubble-out {
+  @apply bg-gradient-to-br from-telegram-message-out to-telegram-accent/80 rounded-2xl rounded-br-md;
+  @apply shadow-md;
+}
+
+/* ===== Chat View (industry-standard layout) ===== */
+.chat-view {
+  /* Ensures message list fills and scrolls correctly inside flex layout */
+  contain: layout style;
+}
+
+.chat-scroll-fab {
+  animation: chatFabIn 0.2s var(--ease-out-expo, ease-out);
+  z-index: 10;
+}
+
+@keyframes chatFabIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ===== Media Gallery (photos & videos grid) ===== */
+.media-gallery-grid {
+  /* Touch-friendly; consistent gaps */
+  -webkit-overflow-scrolling: touch;
+}
+
+.media-gallery-card {
+  @apply transition-transform duration-150;
+  min-height: 72px;
+}
+
+.media-gallery-card:active {
+  transform: scale(0.98);
+}
+
+/* ===== Media Card Styles ===== */
+.media-card {
+  @apply relative overflow-hidden rounded-xl;
+  @apply transition-all duration-300;
+}
+
+.media-card::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent;
+  @apply opacity-0 transition-opacity duration-300;
+  @apply z-10;
+}
+
+@media (hover: hover) {
+  .media-card:hover::before {
+    @apply opacity-100;
+  }
+}
+
+.media-card img,
+.media-card video {
+  @apply w-full h-full object-cover transition-transform duration-500;
+}
+
+@media (hover: hover) {
+  .media-card:hover img,
+  .media-card:hover video {
+    @apply scale-105;
+  }
+}
+
+.media-card-overlay {
+  @apply absolute bottom-0 left-0 right-0 p-3 z-20;
+  @apply translate-y-full transition-transform duration-300;
+}
+
+@media (hover: hover) {
+  .media-card:hover .media-card-overlay {
+    @apply translate-y-0;
+  }
+}
+
+/* Always show overlay on touch devices */
+@media (hover: none) {
+  .media-card::before {
+    @apply opacity-100;
+  }
+  .media-card-overlay {
+    @apply translate-y-0;
+  }
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar {
+  @apply h-1.5 bg-telegram-border rounded-full overflow-hidden;
+}
+
+.progress-bar-fill {
+  @apply h-full bg-gradient-to-r from-telegram-accent to-telegram-accent-hover rounded-full;
+  @apply transition-all duration-300 ease-out;
+}
+
+/* ===== Tooltip - Hide on mobile ===== */
+.tooltip {
+  @apply absolute z-50 px-3 py-1.5 text-xs font-medium text-white rounded-lg;
+  @apply bg-telegram-sidebar/95 backdrop-blur-sm border border-telegram-border;
+  @apply opacity-0 invisible transition-all duration-200 -translate-y-1;
+  @apply shadow-lg;
+  @apply hidden md:block;
+}
+
+.tooltip-trigger:hover .tooltip {
+  @apply opacity-100 visible translate-y-0;
+}
+
+/* ===== Avatar ===== */
+.avatar {
+  @apply relative inline-flex items-center justify-center rounded-full overflow-hidden;
+  @apply bg-gradient-to-br from-telegram-accent to-purple-600;
+  @apply text-white font-semibold;
+  @apply ring-2 ring-transparent transition-all duration-200;
+  flex-shrink: 0;
+}
+
+.avatar:hover {
+  @apply ring-telegram-accent/50;
+}
+
+.avatar-xs { @apply w-6 h-6 text-[10px]; }
+.avatar-sm { @apply w-8 h-8 text-xs; }
+.avatar-md { @apply w-10 h-10 text-sm; }
+.avatar-lg { @apply w-11 h-11 md:w-12 md:h-12 text-sm md:text-base; }
+.avatar-xl { @apply w-14 h-14 md:w-16 md:h-16 text-base md:text-lg; }
+
+.avatar-online::after {
+  content: '';
+  @apply absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full;
+  @apply bg-telegram-online border-2 border-telegram-bg;
+}
+
+/* ===== Dropdown Menu ===== */
+.dropdown-menu {
+  @apply absolute z-50 p-2 rounded-xl;
+  @apply bg-telegram-sidebar/95 backdrop-blur-xl border border-telegram-border;
+  @apply shadow-2xl shadow-black/40;
+  @apply animate-scale-in origin-top-right;
+  @apply min-w-[180px] md:min-w-[200px];
+  @apply max-h-[80vh] overflow-y-auto;
+}
+
+.dropdown-item {
+  @apply flex items-center gap-3 w-full px-3 py-3 md:py-2.5 rounded-lg;
+  @apply text-telegram-text-secondary hover:text-telegram-text;
+  @apply hover:bg-telegram-accent-muted transition-colors duration-150;
+  @apply cursor-pointer;
+  @apply text-sm md:text-base;
+  min-height: 44px;
+}
+
+.dropdown-item-danger {
+  @apply dropdown-item text-telegram-error hover:bg-telegram-error/10;
+}
+
+/* ===== Modal Styles ===== */
+.modal-backdrop {
+  @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm;
+  @apply animate-fade-in;
+}
+
+.modal-content {
+  @apply fixed z-50;
+  @apply w-full max-h-[90vh] overflow-auto;
+  @apply bg-telegram-bg-secondary border border-telegram-border;
+  @apply shadow-2xl shadow-black/50;
+  animation: slideUpMobile 0.3s ease-out;
+  
+  /* Mobile: Bottom sheet style */
+  @apply bottom-0 left-0 right-0 rounded-t-2xl;
+  @apply md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2;
+  @apply md:rounded-2xl md:max-w-md;
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+@keyframes slideUpMobile {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* ===== Mobile Bottom Sheet ===== */
+.bottom-sheet {
+  @apply fixed bottom-0 left-0 right-0 z-50;
+  @apply bg-telegram-sidebar rounded-t-3xl;
+  @apply border-t border-telegram-border;
+  @apply shadow-mobile-nav;
+  animation: slideUpMobile 0.3s ease-out;
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.bottom-sheet-handle {
+  @apply w-10 h-1 bg-telegram-border-light rounded-full mx-auto mt-3 mb-2;
+}
+
+/* ===== Mobile Navigation ===== */
+.mobile-nav {
+  @apply fixed bottom-0 left-0 right-0 z-40;
+  @apply bg-telegram-sidebar/95 backdrop-blur-xl;
+  @apply border-t border-telegram-border;
+  @apply flex items-center justify-around;
+  @apply md:hidden;
+  height: var(--mobile-nav-height);
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.mobile-nav-item {
+  @apply flex flex-col items-center justify-center gap-1;
+  @apply text-telegram-text-muted;
+  @apply transition-colors duration-200;
+  @apply py-2 px-4;
+  min-width: 64px;
+}
+
+.mobile-nav-item.active {
+  @apply text-telegram-accent;
+}
+
+.mobile-nav-item svg {
+  @apply w-6 h-6;
+}
+
+.mobile-nav-item span {
+  @apply text-[10px] font-medium;
+}
+
+/* ===== Mobile Sidebar Overlay ===== */
+.sidebar-overlay {
+  @apply fixed inset-0 z-30 bg-black/50 backdrop-blur-sm;
+  @apply md:hidden;
+  @apply animate-fade-in;
+}
+
+.mobile-sidebar {
+  @apply fixed top-0 left-0 bottom-0 z-40;
+  @apply w-[85vw] max-w-[320px];
+  @apply bg-telegram-sidebar;
+  @apply border-r border-telegram-border;
+  @apply animate-slide-in-left;
+  @apply md:relative md:animate-none;
+}
+
+/* ===== Glass Effect ===== */
+.glass {
+  @apply bg-telegram-sidebar/80 backdrop-blur-xl;
+  @apply border border-white/5;
+}
+
+.glass-card {
+  @apply glass rounded-xl md:rounded-2xl shadow-card;
+}
+
+/* ===== Gradient Text ===== */
+.gradient-text {
+  @apply bg-gradient-to-r from-telegram-accent via-purple-500 to-pink-500;
+  @apply bg-clip-text text-transparent;
+}
+
+/* ===== Animations ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  @apply animate-slide-up;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ===== Page Transitions ===== */
+.page-enter {
+  @apply opacity-0 translate-y-4;
+}
+
+.page-enter-active {
+  @apply opacity-100 translate-y-0 transition-all duration-300;
+}
+
+/* ===== Loading Spinner (Material Design 3 / iOS style) ===== */
+.loading-spinner-svg {
+  transform-origin: center;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 md:py-16 px-6 md:px-8 text-center;
+}
+
+.empty-state-icon {
+  @apply w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6 text-telegram-text-muted opacity-50;
+}
+
+.empty-state-title {
+  @apply text-lg md:text-xl font-semibold text-telegram-text mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm md:text-base text-telegram-text-secondary max-w-sm;
+}
+
+/* ===== Safe Area Padding ===== */
+.safe-area-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-area-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* ===== Hide on Mobile/Desktop ===== */
+.hide-mobile {
+  @apply hidden md:flex;
+}
+
+.hide-desktop {
+  @apply flex md:hidden;
+}
+
+/* ===== Touch-friendly spacing ===== */
+.touch-spacing {
+  @apply p-1;
+}
+
+.touch-spacing > * {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* ===== Responsive Text ===== */
+.text-responsive-sm {
+  @apply text-xs md:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-sm md:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-base md:text-lg;
+}
+
+.text-responsive-xl {
+  @apply text-lg md:text-xl;
+}
+
+.text-responsive-2xl {
+  @apply text-xl md:text-2xl;
+}
+
+.text-responsive-3xl {
+  @apply text-2xl md:text-3xl;
+}
+
+.text-responsive-4xl {
+  @apply text-3xl md:text-4xl lg:text-5xl;
+}
+
+/* ===== Responsive Container ===== */
+.container-responsive {
+  @apply w-full px-4 mx-auto;
+  @apply sm:px-6 lg:px-8;
+  @apply max-w-7xl;
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .mobile-nav,
+  .sidebar-overlay,
+  .no-print {
+    display: none !important;
+  }
+}
