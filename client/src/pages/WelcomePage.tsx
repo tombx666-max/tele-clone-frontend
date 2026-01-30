@@ -25,15 +25,15 @@ export function WelcomePage() {
               <button type="button" onClick={() => navigate('/login')} className="px-4 py-2.5 text-sm font-medium text-telegram-text-secondary hover:text-telegram-text transition-colors rounded-xl hover:bg-telegram-accent/10 min-h-[44px]">Sign In</button>
               <button type="button" onClick={() => navigate('/register')} className="px-5 py-2.5 text-sm font-medium bg-telegram-accent hover:bg-telegram-accent-hover text-white rounded-xl transition-all shadow-lg shadow-telegram-accent/25 hover:shadow-xl hover:shadow-telegram-accent/30 flex items-center gap-2 min-h-[44px]">Get Started<ArrowRight className="w-4 h-4" /></button>
             </div>
-            <div className="flex sm:hidden items-center gap-1">
-              <button type="button" onClick={() => navigate('/login')} className="px-3 py-3 text-sm font-medium text-telegram-text-secondary hover:text-telegram-text transition-colors rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center">Sign In</button>
-              <button type="button" onClick={() => navigate('/register')} className="px-4 py-3 text-sm font-medium bg-telegram-accent hover:bg-telegram-accent-hover text-white rounded-xl transition-all flex items-center gap-1.5 min-h-[44px]">Start<ArrowRight className="w-4 h-4" /></button>
+            <div className="flex sm:hidden items-center gap-1.5">
+              <button type="button" onClick={() => navigate('/login')} className="px-2.5 py-2 text-xs font-medium text-telegram-text-secondary hover:text-telegram-text transition-colors rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center focus-visible:ring-1 focus-visible:ring-telegram-accent focus-visible:ring-offset-1 focus-visible:ring-offset-telegram-bg">Sign In</button>
+              <button type="button" onClick={() => navigate('/register')} className="px-3 py-2 text-xs font-medium bg-telegram-accent hover:bg-telegram-accent-hover text-white rounded-lg transition-all flex items-center gap-1 min-h-[36px] focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:ring-offset-1 focus-visible:ring-offset-telegram-bg">Start<ArrowRight className="w-3.5 h-3.5" /></button>
             </div>
           </div>
         </div>
       </nav>
 
-      <section className="min-h-[calc(100dvh-4rem)] sm:min-h-[85vh] md:min-h-screen flex items-center justify-center px-4 pt-[calc(4rem+env(safe-area-inset-top))] pb-8 sm:pt-20 md:pt-0 md:pb-0 relative">
+      <section className="min-h-[100dvh] sm:min-h-[95vh] md:min-h-screen flex items-center justify-center px-4 pt-[calc(4rem+env(safe-area-inset-top))] pb-10 sm:pt-20 md:pt-0 md:pb-0 relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-0 md:left-1/4 w-48 sm:w-64 md:w-96 h-48 sm:h-64 md:h-96 bg-telegram-accent/15 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-0 md:right-1/4 w-48 sm:w-64 md:w-96 h-48 sm:h-64 md:h-96 bg-purple-500/15 rounded-full blur-3xl" />
