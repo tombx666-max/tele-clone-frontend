@@ -1,4 +1,4 @@
-import { apiCall } from './api';
+import { apiCall, API_BASE } from './api';
 import type { ProRequest, UserNotification } from '../types';
 
 export const downloadService = {
@@ -22,7 +22,7 @@ export const downloadService = {
 
   // Get downloads list (directory listing)
   async getDownloadsList(): Promise<any[]> {
-    const response = await fetch('/api/downloads-list');
+    const response = await fetch(`${API_BASE}/api/downloads-list`);
     if (!response.ok) throw new Error('Failed to fetch downloads');
     const data = await response.json();
     return data.downloads || [];
@@ -30,14 +30,14 @@ export const downloadService = {
 
   // Delete all downloads
   async deleteAll(): Promise<void> {
-    const response = await fetch('/downloads', { method: 'DELETE' });
+    const response = await fetch(`${API_BASE}/downloads`, { method: 'DELETE' });
     const data = await response.json();
     if (!data.success) throw new Error(data.message || 'Failed to delete downloads');
   },
 
   // Delete chat downloads
   async deleteChatDownloads(chatId: string): Promise<void> {
-    const response = await fetch(`/downloads/${encodeURIComponent(chatId)}`, {
+    const response = await fetch(`${API_BASE}/downloads/${encodeURIComponent(chatId)}`, {
       method: 'DELETE',
     });
     const data = await response.json();

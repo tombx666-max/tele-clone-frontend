@@ -1,4 +1,4 @@
-import { apiCall } from './api';
+import { apiCall, API_BASE } from './api';
 import type { AppUser } from '../types';
 
 export interface LoginResponse {
@@ -18,7 +18,7 @@ export interface RegisterResponse {
 export const authService = {
   // Login user
   async login(username: string, password: string): Promise<LoginResponse> {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -34,7 +34,7 @@ export const authService = {
 
   // Register user
   async register(username: string, email: string, password: string): Promise<RegisterResponse> {
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(`${API_BASE}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password }),
@@ -53,7 +53,7 @@ export const authService = {
     const refreshToken = localStorage.getItem('refreshToken');
     
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),

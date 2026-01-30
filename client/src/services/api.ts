@@ -1,5 +1,5 @@
 // Base API configuration – empty = same origin (production-ready)
-const API_BASE = import.meta.env.VITE_API_URL ?? '';
+export const API_BASE = import.meta.env.VITE_API_URL ?? '';
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof TypeError && err.message === 'Failed to fetch') {

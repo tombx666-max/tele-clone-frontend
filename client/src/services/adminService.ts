@@ -1,4 +1,4 @@
-import { apiCall } from './api';
+import { apiCall, API_BASE } from './api';
 import type {
   AdminUser,
   AdminStats,
@@ -78,7 +78,7 @@ export const adminService = {
     const response = await apiCall('/api/admin/all-downloads');
     if (!response.ok) {
       // Fallback to local files API
-      const fallbackRes = await fetch('/api/downloads-list');
+      const fallbackRes = await fetch(`${API_BASE}/api/downloads-list`);
       if (fallbackRes.ok) {
         const data = await fallbackRes.json();
         return data.downloads || [];
@@ -117,7 +117,7 @@ export const adminService = {
 
   // Delete a file
   async deleteFile(filePath: string): Promise<void> {
-    const response = await fetch('/api/downloads-file', {
+    const response = await fetch(`${API_BASE}/api/downloads-file`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filePath }),
@@ -128,7 +128,7 @@ export const adminService = {
 
   // Delete a folder
   async deleteFolder(chatId: string): Promise<void> {
-    const response = await fetch(`/downloads/${encodeURIComponent(chatId)}`, {
+    const response = await fetch(`${API_BASE}/downloads/${encodeURIComponent(chatId)}`, {
       method: 'DELETE',
     });
     const data = await response.json();
