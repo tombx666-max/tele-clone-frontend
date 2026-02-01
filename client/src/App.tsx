@@ -60,6 +60,7 @@ import type {
 
 // Import API service from new modular structure
 import { apiCall, API_BASE } from './services/api';
+import { downloadService } from './services';
 import { ChatView, LoadingSpinner, TurnstileWidget } from './components';
 
 const LazyWelcomePage = lazy(() => import('./pages/WelcomePage').then((m) => ({ default: m.WelcomePage })));
@@ -1349,18 +1350,28 @@ function AppContent() {
     return `${import.meta.env.VITE_API_URL || ''}${file.path}`;
   }, [getDownloadedFile]);
 
-  // Fetch downloads data
+  // Fetch downloads data from cloud (user's downloads – works on all devices)
   const fetchDownloadsData = async () => {
     setLoadingDownloads(true);
     try {
-      // Fetch downloads list from API
-      const folderRes = await fetch(`${API_BASE}/api/downloads-list`);
-      if (folderRes.ok) {
-        const data = await folderRes.json();
-        setDownloadsData(data.downloads || []);
-      }
+      const groups = await downloadService.getMyDownloads();
+      // Transform API shape (chat groups + files with cloudinaryUrl) into folder-like structure for UI
+      const folders = (groups || []).map((group: { chatId: string; chatName: string; files: any[] }) => ({
+        name: group.chatName || group.chatId,
+        chatId: group.chatId,
+        children: (group.files || []).map((f: any) => ({
+          type: 'file',
+          name: f.fileName,
+          path: f.cloudinaryUrl || (f.localPath ? `${API_BASE}${f.localPath}` : ''),
+          size: f.fileSize,
+          id: f.id,
+          fileType: f.fileType,
+        })),
+      }));
+      setDownloadsData(folders);
     } catch (err) {
       console.error('Failed to fetch downloads:', err);
+      setDownloadsData([]);
     }
     setLoadingDownloads(false);
   };
@@ -2542,7 +2553,7 @@ function AppContent() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-telegram-text">All Downloads</h2>
-                    <p className="text-telegram-text-secondary text-sm mt-1">View all user downloads (includes deleted)</p>
+                    <p className="text-telegram-text-secondary text-sm mt-1">View all user downloads (includes items users removed from My Downloads)</p>
                   </div>
                   <button
                     onClick={fetchAdminDownloads}
@@ -2589,13 +2600,12 @@ function AppContent() {
                                 download.deletedByUser ? 'opacity-60' : ''
                               }`}
                             >
-                              {/* Deleted badge */}
+                              {/* Removed by user – still visible to admin, not deleted from system */}
                               {download.deletedByUser && (
-                                <div className="absolute top-1 left-1 z-10 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
-                                  Deleted
+                                <div className="absolute top-1 left-1 z-10 bg-amber-500/90 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium" title="User removed from My Downloads – still in system">
+                                  Removed by user
                                 </div>
                               )}
-                              
                               <button
                                 onClick={() => setMediaPreview({
                                   isOpen: true,
@@ -2629,6 +2639,25 @@ function AppContent() {
                                   </div>
                                 </div>
                               </button>
+                              {/* Admin: Save to device – always visible for mobile and desktop */}
+                              {mediaUrl && (
+                                <div className="flex gap-1.5 p-2 border-t border-telegram-border bg-telegram-sidebar/50">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const isCloud = mediaUrl.includes('cloudinary');
+                                      saveFileToDevice(mediaUrl, download.fileName, isCloud);
+                                      toast.success('Saving to device...');
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-telegram-accent hover:bg-telegram-accent-hover text-white text-[10px] font-medium min-h-[36px]"
+                                    title="Save to device"
+                                  >
+                                    <Download className="w-3.5 h-3.5 flex-shrink-0" />
+                                    Save to device
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -2732,17 +2761,18 @@ function AppContent() {
                 <X className="w-8 h-8" />
               </button>
               
-              {/* Download button */}
-              <a
-                href={mediaPreview.url}
-                download={mediaPreview.fileName}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute -top-12 right-12 text-white hover:text-gray-300 transition-colors z-10"
-                title="Download"
+              {/* Save to device (works for Cloudinary and same-origin) */}
+              <button
+                onClick={() => {
+                  const isCloud = mediaPreview.url.includes('cloudinary');
+                  saveFileToDevice(mediaPreview.url, mediaPreview.fileName, isCloud);
+                  toast.success('Saving...');
+                }}
+                className="absolute -top-12 right-12 text-white hover:text-gray-300 transition-colors z-10 flex items-center justify-center"
+                title="Save to device"
               >
                 <Download className="w-7 h-7" />
-              </a>
+              </button>
               
               {/* Media content */}
               <div className="flex items-center justify-center">
@@ -2763,16 +2793,18 @@ function AppContent() {
                   <div className="bg-telegram-sidebar rounded-2xl p-8 text-center">
                     <FileText className="w-20 h-20 text-telegram-accent mx-auto mb-4" />
                     <p className="text-telegram-text font-medium mb-4">{mediaPreview.fileName}</p>
-                    <a
-                      href={mediaPreview.url}
-                      download={mediaPreview.fileName}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const isCloud = mediaPreview.url.includes('cloudinary');
+                        saveFileToDevice(mediaPreview.url, mediaPreview.fileName, isCloud);
+                        toast.success('Saving...');
+                      }}
                       className="btn-primary"
                     >
                       <Download className="w-5 h-5" />
-                      Download File
-                    </a>
+                      Save to device
+                    </button>
                   </div>
                 )}
               </div>
@@ -3306,7 +3338,7 @@ function AppContent() {
             ) : (
               <div className="space-y-4">
                 {downloadsData.map((folder) => (
-                  <div key={folder.name} className="bg-telegram-message rounded-lg overflow-hidden">
+                  <div key={folder.chatId ?? folder.name} className="bg-telegram-message rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between p-4 border-b border-telegram-border">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-telegram-accent flex items-center justify-center">
@@ -3322,112 +3354,118 @@ function AppContent() {
                       <button
                         onClick={() => {
                           const folderName = folder.name;
+                          const fileIds = (folder.children || []).filter((c: any) => c.type === 'file' && c.id).map((c: any) => c.id);
                           showConfirmation({
                             title: 'Delete Folder',
-                            message: `Are you sure you want to delete all downloads from "${folderName}"? This action cannot be undone.`,
+                            message: `Are you sure you want to remove all downloads from "${folderName}" from My Downloads?`,
                             confirmText: 'Delete All',
                             type: 'danger',
                             onConfirm: async () => {
                               closeConfirmation();
                               try {
-                                const res = await fetch(`/downloads/${encodeURIComponent(folderName)}`, { method: 'DELETE' });
-                                const data = await res.json();
-                                if (data.success) {
-                                  fetchDownloadsData();
-                                  toast.success('Folder deleted successfully');
-                                } else {
-                                  toast.error('Error: ' + data.message);
+                                for (const id of fileIds) {
+                                  await downloadService.softDelete(id);
                                 }
+                                await fetchDownloadsData();
+                                toast.success('Removed from My Downloads');
                               } catch (err) {
-                                toast.error('Failed to delete');
+                                toast.error('Failed to remove');
                               }
                             },
                           });
                         }}
                         className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                        title="Delete folder"
+                        title="Remove folder from My Downloads"
                       >
                         <X className="w-5 h-5" />
                       </button>
                     </div>
                     <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {folder.children?.filter((item: any) => item.type === 'file').map((file: any) => {
+                        const isImage = file.fileType === 'photo';
+                        const isVideo = file.fileType === 'video';
                         const ext = file.name.split('.').pop()?.toLowerCase();
-                        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
-                        const isVideo = ['mp4', 'webm', 'mov'].includes(ext || '');
+                        const isImageByExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+                        const isVideoByExt = ['mp4', 'webm', 'mov'].includes(ext || '');
                         const formatSize = (bytes: number) => {
+                          if (!bytes) return '';
                           if (bytes < 1024) return bytes + ' B';
                           if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
                           return (bytes / 1024 / 1024).toFixed(1) + ' MB';
                         };
-                        const deleteFile = (e: React.MouseEvent) => {
+                        const mediaUrl = file.path || '';
+                        const deleteFileHandler = (e: React.MouseEvent) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const fileName = file.name;
-                          const filePath = file.path;
+                          const downloadId = file.id;
+                          if (!downloadId) return;
                           showConfirmation({
-                            title: 'Delete File',
-                            message: `Are you sure you want to delete "${fileName}"?`,
-                            confirmText: 'Delete',
+                            title: 'Remove from My Downloads',
+                            message: `Remove "${fileName}" from My Downloads?`,
+                            confirmText: 'Remove',
                             type: 'danger',
                             onConfirm: async () => {
                               closeConfirmation();
                               try {
-                                const res = await fetch(`${API_BASE}/api/downloads-file`, {
-                                  method: 'DELETE',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ filePath }),
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                  fetchDownloadsData();
-                                  toast.success('File deleted');
-                                } else {
-                                  toast.error('Error: ' + data.message);
-                                }
+                                await downloadService.softDelete(downloadId);
+                                await fetchDownloadsData();
+                                toast.success('Removed from My Downloads');
                               } catch (err) {
-                                toast.error('Failed to delete file');
+                                toast.error('Failed to remove');
                               }
                             },
                           });
                         };
                         return (
                           <div
-                            key={file.name}
+                            key={file.id || file.name}
                             className="bg-telegram-sidebar rounded-lg overflow-hidden hover:ring-2 hover:ring-telegram-accent transition-all relative group"
                           >
-                            <a
-                              href={file.path}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              {isImage ? (
-                                <img src={file.path} alt={file.name} loading="lazy" className="w-full h-24 object-cover" />
-                              ) : isVideo ? (
-                                <div className="relative w-full h-24 bg-black flex items-center justify-center">
-                                  <video src={file.path} className="w-full h-full object-cover" />
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-black/50 rounded-full p-2">
-                                      <Play className="w-6 h-6 text-white fill-white" />
+                            {mediaUrl ? (
+                              <a
+                                href={mediaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                {isImage || isImageByExt ? (
+                                  <img src={mediaUrl} alt={file.name} loading="lazy" className="w-full h-24 object-cover" />
+                                ) : isVideo || isVideoByExt ? (
+                                  <div className="relative w-full h-24 bg-black flex items-center justify-center">
+                                    <video src={mediaUrl} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="bg-black/50 rounded-full p-2">
+                                        <Play className="w-6 h-6 text-white fill-white" />
+                                      </div>
                                     </div>
                                   </div>
+                                ) : (
+                                  <div className="w-full h-24 flex items-center justify-center bg-telegram-bg">
+                                    <FileText className="w-8 h-8 text-telegram-text-secondary" />
+                                  </div>
+                                )}
+                                <div className="p-2">
+                                  <p className="text-xs truncate" title={file.name}>{file.name}</p>
+                                  <p className="text-xs text-telegram-text-secondary">{formatSize(file.size)}</p>
                                 </div>
-                              ) : (
+                              </a>
+                            ) : (
+                              <div className="block">
                                 <div className="w-full h-24 flex items-center justify-center bg-telegram-bg">
                                   <FileText className="w-8 h-8 text-telegram-text-secondary" />
                                 </div>
-                              )}
-                              <div className="p-2">
-                                <p className="text-xs truncate" title={file.name}>{file.name}</p>
-                                <p className="text-xs text-telegram-text-secondary">{formatSize(file.size)}</p>
+                                <div className="p-2">
+                                  <p className="text-xs truncate" title={file.name}>{file.name}</p>
+                                  <p className="text-xs text-telegram-text-secondary">{formatSize(file.size)}</p>
+                                </div>
                               </div>
-                            </a>
-                            {/* Delete button */}
+                            )}
+                            {/* Remove from My Downloads button */}
                             <button
-                              onClick={deleteFile}
+                              onClick={deleteFileHandler}
                               className="absolute top-1 right-1 p-1.5 bg-red-500 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Delete file"
+                              title="Remove from My Downloads"
                             >
                               <X className="w-3 h-3 text-white" />
                             </button>
