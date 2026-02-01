@@ -128,7 +128,7 @@ export const adminService = {
 
   // Delete a folder
   async deleteFolder(chatId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/downloads/${encodeURIComponent(chatId)}`, {
+    const response = await fetch(`/downloads/${encodeURIComponent(chatId)}`, {
       method: 'DELETE',
     });
     const data = await response.json();

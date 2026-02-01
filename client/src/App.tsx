@@ -59,7 +59,7 @@ import type {
 } from './types';
 
 // Import API service from new modular structure
-import { apiCall } from './services/api';
+import { apiCall, API_BASE } from './services/api';
 import { ChatView, LoadingSpinner, TurnstileWidget } from './components';
 
 const LazyWelcomePage = lazy(() => import('./pages/WelcomePage').then((m) => ({ default: m.WelcomePage })));
@@ -308,7 +308,7 @@ function AppContent() {
     setAppAuthLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -372,7 +372,7 @@ function AppContent() {
     setAppAuthLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -410,7 +410,7 @@ function AppContent() {
     const refreshToken = localStorage.getItem('refreshToken');
     
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
@@ -613,7 +613,7 @@ function AppContent() {
         setAdminDownloads(data.downloads || []);
       } else {
         // Fallback to local files if database API fails
-        const fallbackRes = await fetch('/api/downloads-list');
+        const fallbackRes = await fetch(`${API_BASE}/api/downloads-list`);
         if (fallbackRes.ok) {
           const data = await fallbackRes.json();
           setAdminDownloads(data.downloads || []);
@@ -643,7 +643,7 @@ function AppContent() {
 
   const performAdminDeleteFile = async (filePath: string, fileName: string) => {
     try {
-      const res = await fetch('/api/downloads-file', {
+      const res = await fetch(`${API_BASE}/api/downloads-file`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filePath }),
@@ -1354,7 +1354,7 @@ function AppContent() {
     setLoadingDownloads(true);
     try {
       // Fetch downloads list from API
-      const folderRes = await fetch('/api/downloads-list');
+      const folderRes = await fetch(`${API_BASE}/api/downloads-list`);
       if (folderRes.ok) {
         const data = await folderRes.json();
         setDownloadsData(data.downloads || []);
@@ -3373,7 +3373,7 @@ function AppContent() {
                             onConfirm: async () => {
                               closeConfirmation();
                               try {
-                                const res = await fetch('/api/downloads-file', {
+                                const res = await fetch(`${API_BASE}/api/downloads-file`, {
                                   method: 'DELETE',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ filePath }),
