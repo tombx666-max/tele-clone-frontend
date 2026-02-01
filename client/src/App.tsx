@@ -64,24 +64,55 @@ import { ChatView, LoadingSpinner, TurnstileWidget } from './components';
 
 const LazyWelcomePage = lazy(() => import('./pages/WelcomePage').then((m) => ({ default: m.WelcomePage })));
 
-/** Trigger a browser download so the file is saved to the user's device. */
-async function saveFileToDevice(url: string, filename: string): Promise<void> {
-  try {
-    const res = await fetch(url, { credentials: 'include', mode: 'cors' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(objectUrl);
-  } catch (err) {
-    console.warn('Save to device failed:', err);
+/** Build full URL for a download path (same-origin so proxy/CORS works). */
+function getDownloadFullUrl(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
+  const base = import.meta.env.VITE_API_URL ?? '';
+  return base ? `${base.replace(/\/$/, '')}${pathOrUrl}` : `${window.location.origin}${pathOrUrl}`;
+}
+
+/** URL for attachment endpoint so browser saves to user's Downloads folder (same-origin files only). */
+function getAttachmentDownloadUrl(path: string, filename: string): string {
+  const relativePath = path.replace(/^\/downloads\/?/, '');
+  const base = import.meta.env.VITE_API_URL ?? '';
+  const origin = base ? base.replace(/\/$/, '') : window.location.origin;
+  return `${origin}/api/download-attachment?path=${encodeURIComponent(relativePath)}&filename=${encodeURIComponent(filename)}`;
+}
+
+/** Trigger save to user's Downloads folder. For same-origin use attachment URL (direct link); for Cloudinary use fetch+blob. */
+function saveFileToDevice(urlOrPath: string, filename: string, isCloudinary = false): void {
+  if (isCloudinary) {
+    const fullUrl = getDownloadFullUrl(urlOrPath);
+    fetch(fullUrl, { credentials: 'omit', mode: 'cors' })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+      })
+      .catch((err) => {
+        console.warn('Save to device failed:', err);
+        throw err;
+      });
+    return;
   }
+  const attachmentUrl = getAttachmentDownloadUrl(urlOrPath, filename);
+  const a = document.createElement('a');
+  a.href = attachmentUrl;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function AppContent() {
@@ -1027,7 +1058,7 @@ function AppContent() {
         }
         break;
 
-      case 'downloadComplete':
+      case 'downloadComplete': {
         setDownloadProgress((prev) => {
           const newProgress = { ...prev };
           delete newProgress[data.messageId];
@@ -1035,21 +1066,48 @@ function AppContent() {
         });
         setDownloadedFiles((prev) => [
           ...prev,
-          { 
-            messageId: data.messageId, 
-            filename: data.filename, 
+          {
+            messageId: data.messageId,
+            filename: data.filename,
             path: data.path,
             cloudinaryUrl: data.cloudinaryUrl,
           },
         ]);
         toast.dismiss(`upload-${data.messageId}`);
-        toast.success(`Downloaded: ${data.filename}`, {
-          icon: data.cloudinaryUrl ? '☁️' : '💾',
-        });
-        // Save file to user's device (browser download)
-        const downloadUrl = data.cloudinaryUrl || `${import.meta.env.VITE_API_URL || ''}${data.path}`;
-        saveFileToDevice(downloadUrl, data.filename);
+        const downloadUrl = data.cloudinaryUrl || data.path;
+        const filename = data.filename;
+        const isCloudinary = Boolean(data.cloudinaryUrl);
+        // Try automatic save (direct link for same-origin so file goes to user's Downloads)
+        try {
+          saveFileToDevice(downloadUrl, filename, isCloudinary);
+        } catch (_) {}
+        toast(
+          (t) => (
+            <span className="flex items-center gap-3">
+              <span>
+                {data.cloudinaryUrl ? '☁️' : '💾'} Downloaded: {filename}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    saveFileToDevice(downloadUrl, filename, isCloudinary);
+                    toast.success('Saved to device');
+                  } catch {
+                    toast.error('Could not save to device');
+                  }
+                  toast.dismiss(t.id);
+                }}
+                className="rounded bg-telegram-accent px-2.5 py-1 text-sm font-medium text-white hover:bg-telegram-accent-hover"
+              >
+                Save to device
+              </button>
+            </span>
+          ),
+          { duration: 10000 }
+        );
         break;
+      }
 
       case 'bulkDownloadStart':
         setBulkDownloading(true);
