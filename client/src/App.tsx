@@ -350,6 +350,32 @@ function AppContent() {
   const handleAppRegister = async () => {
     setAppAuthError('');
 
+    const trimmedUsername = registerUsername.trim();
+    const trimmedEmail = registerEmail.trim();
+
+    if (!trimmedUsername) {
+      toast.error('Username is required');
+      return;
+    }
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+      toast.error('Username must be between 3 and 30 characters');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+      toast.error('Username can only contain letters, numbers, and underscores');
+      return;
+    }
+
+    if (!trimmedEmail) {
+      toast.error('Email is required');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     if (!registerAcceptedTerms) {
       toast.error('You must accept the Terms and Conditions to register');
       return;
@@ -369,6 +395,10 @@ function AppContent() {
       toast.error('Password must be at least 6 characters');
       return;
     }
+    if (registerPassword.length > 128) {
+      toast.error('Password must be at most 128 characters');
+      return;
+    }
 
     setAppAuthLoading(true);
 
@@ -377,8 +407,8 @@ function AppContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: registerUsername,
-          email: registerEmail,
+          username: trimmedUsername,
+          email: trimmedEmail,
           password: registerPassword,
           ...(turnstileSiteKey && { captchaToken: registerCaptchaToken }),
         }),
@@ -3671,7 +3701,7 @@ function App() {
       <Toaster
         position="top-center"
         toastOptions={{
-          duration: 4000,
+          duration: 2000,
           style: {
             background: '#182533',
             color: '#f5f5f5',
@@ -3690,7 +3720,7 @@ function App() {
               primary: '#ef4444',
               secondary: '#182533',
             },
-            duration: 5000,
+            duration: 3000,
           },
           loading: {
             icon: <LoadingSpinner size="sm" className="text-[#5288c1]" />,

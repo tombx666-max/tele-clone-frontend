@@ -23,18 +23,44 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     e.preventDefault();
     setError('');
 
+    const trimmedUsername = username.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedUsername) {
+      setError('Username is required');
+      return;
+    }
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+      setError('Username must be between 3 and 30 characters');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+      setError('Username can only contain letters, numbers, and underscores');
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setError('Email is required');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     if (!acceptedTerms) {
       setError('You must accept the Terms and Conditions to register');
       return;
     }
 
-    if (!username || !email || !password || !confirmPassword) {
+    if (!password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
@@ -42,8 +68,12 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       setError('Password must be at least 6 characters');
       return;
     }
+    if (password.length > 128) {
+      setError('Password must be at most 128 characters');
+      return;
+    }
 
-    const success = await register(username, email, password);
+    const success = await register(trimmedUsername, trimmedEmail, password);
     if (!success) {
       setError('Registration failed. Please try again.');
     }
