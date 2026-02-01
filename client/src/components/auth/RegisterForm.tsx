@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { LoadingSpinner } from '../common';
 import { useAuth } from '../../contexts';
 
