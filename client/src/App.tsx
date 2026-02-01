@@ -59,10 +59,30 @@ import type {
 } from './types';
 
 // Import API service from new modular structure
-import { apiCall, API_BASE } from './services/api';
+import { apiCall } from './services/api';
 import { ChatView, LoadingSpinner, TurnstileWidget } from './components';
 
 const LazyWelcomePage = lazy(() => import('./pages/WelcomePage').then((m) => ({ default: m.WelcomePage })));
+
+/** Trigger a browser download so the file is saved to the user's device. */
+async function saveFileToDevice(url: string, filename: string): Promise<void> {
+  try {
+    const res = await fetch(url, { credentials: 'include', mode: 'cors' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    console.warn('Save to device failed:', err);
+  }
+}
 
 function AppContent() {
   const navigate = useNavigate();
@@ -257,7 +277,7 @@ function AppContent() {
     setAppAuthLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -321,7 +341,7 @@ function AppContent() {
     setAppAuthLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -359,7 +379,7 @@ function AppContent() {
     const refreshToken = localStorage.getItem('refreshToken');
     
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
@@ -562,7 +582,7 @@ function AppContent() {
         setAdminDownloads(data.downloads || []);
       } else {
         // Fallback to local files if database API fails
-        const fallbackRes = await fetch(`${API_BASE}/api/downloads-list`);
+        const fallbackRes = await fetch('/api/downloads-list');
         if (fallbackRes.ok) {
           const data = await fallbackRes.json();
           setAdminDownloads(data.downloads || []);
@@ -592,7 +612,7 @@ function AppContent() {
 
   const performAdminDeleteFile = async (filePath: string, fileName: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/downloads-file`, {
+      const res = await fetch('/api/downloads-file', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filePath }),
@@ -626,7 +646,7 @@ function AppContent() {
 
   const performAdminDeleteFolder = async (chatId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/downloads/${encodeURIComponent(chatId)}`, { method: 'DELETE' });
+      const res = await fetch(`/downloads/${encodeURIComponent(chatId)}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         fetchAdminDownloads();
@@ -1026,6 +1046,9 @@ function AppContent() {
         toast.success(`Downloaded: ${data.filename}`, {
           icon: data.cloudinaryUrl ? '☁️' : '💾',
         });
+        // Save file to user's device (browser download)
+        const downloadUrl = data.cloudinaryUrl || `${import.meta.env.VITE_API_URL || ''}${data.path}`;
+        saveFileToDevice(downloadUrl, data.filename);
         break;
 
       case 'bulkDownloadStart':
@@ -1273,7 +1296,7 @@ function AppContent() {
     setLoadingDownloads(true);
     try {
       // Fetch downloads list from API
-      const folderRes = await fetch(`${API_BASE}/api/downloads-list`);
+      const folderRes = await fetch('/api/downloads-list');
       if (folderRes.ok) {
         const data = await folderRes.json();
         setDownloadsData(data.downloads || []);
@@ -3249,7 +3272,7 @@ function AppContent() {
                             onConfirm: async () => {
                               closeConfirmation();
                               try {
-                                const res = await fetch(`${API_BASE}/downloads/${encodeURIComponent(folderName)}`, { method: 'DELETE' });
+                                const res = await fetch(`/downloads/${encodeURIComponent(folderName)}`, { method: 'DELETE' });
                                 const data = await res.json();
                                 if (data.success) {
                                   fetchDownloadsData();
@@ -3292,7 +3315,7 @@ function AppContent() {
                             onConfirm: async () => {
                               closeConfirmation();
                               try {
-                                const res = await fetch(`${API_BASE}/api/downloads-file`, {
+                                const res = await fetch('/api/downloads-file', {
                                   method: 'DELETE',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ filePath }),
